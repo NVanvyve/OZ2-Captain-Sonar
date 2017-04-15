@@ -1,7 +1,7 @@
 all :compile
 
 compile :
-	@ozc *.oz
+	@ozc -c *.oz
 
 start :
 	@ozengine Main.ozf

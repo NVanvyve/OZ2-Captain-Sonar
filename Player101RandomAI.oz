@@ -102,8 +102,10 @@ in
 	 end
       end
       NewState
+      RetPos
    in
-      NewState = {UpdateState State [pos#{NewPos}]}
+      RetPos = {NewPos}
+      NewState = {UpdateState State [visited#[RetPos] pos#RetPos]}
       ID = NewState.id
       Position = NewState.pos
       NewState
@@ -175,7 +177,7 @@ in
 	 Msg = {SubRandom 10 State.pos}
 	 case Msg
 	 of null then
-	    NewState = {UpdateState State [surf#true visited#nil]}
+	    NewState = {UpdateState State [surf#true visited#[State.visited.1]]}
 	    ret(surface NewState)
 	 [] move(Dir NewPos) then
 	    NewState = {UpdateState State [pos#NewPos visited#(NewPos|State.visited)]}
@@ -184,6 +186,7 @@ in
       end
       Ret
    in
+      {Browser.browse State.visited}
       Ret = {RandomMove State}
       case Ret
       of ret(NewDir NewState) then

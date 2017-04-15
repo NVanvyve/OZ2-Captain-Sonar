@@ -3,7 +3,6 @@ import
    Input
 
    OS %rand
-   System %debug
 export
    portPlayer:StartPlayer
 define
@@ -90,13 +89,11 @@ in
       ID = State.id
       Position = State.pos
       Direction = surface
-      {System.show 'target surfacing'}
       NewState = {UpdateState State [surf#true]}
       NewState
    end
 
    fun{Dive State} NewState in
-      {System.show 'target diving'}
       NewState = {UpdateState State [surf#false]}
       NewState
    end
@@ -260,9 +257,6 @@ in
    end
    
    proc{TreatStream Stream State}
-      %Le State va être les infos sur notre Sub, ou autre chose
-      %Pv, position, munitions, ...
-      %state(id:ID pos:POS  ...)
       
       case Stream
       of nil then skip
