@@ -4,7 +4,7 @@ import
    Input
    PlayerManager
 
-   Browser %debug
+   %Browser %debug
    System %debug
 define
    GuiPort %Port du GUI
@@ -145,6 +145,9 @@ in
                   ThisState = {AdjoinList State [alive#State.alive-1 N#StateN]}
                   {Broadcast Players sayDeath(RET_ID)}
                   {Send GuiPort removePlayer(RET_ID)}
+                  if Input.isTurnByTurn == false then
+                     {Send State.sync dead}
+                  end
                []sayDamageTaken(RET_ID RET_DMG RET_HP) then
                   ThisState = MidState2
                   {Broadcast Players sayDamageTaken(RET_ID RET_DMG RET_HP)}
@@ -201,6 +204,9 @@ in
                   NewState = {AdjoinList State [alive#State.alive-1 N#StateN]}
 		  {Broadcast Players sayDeath(RET_ID)}
 		  {Send GuiPort removePlayer(RET_ID)}
+                  if Input.isTurnByTurn == false then
+                     {Send State.sync dead}
+                  end
 	       []sayDamageTaken(RET_ID RET_DMG RET_HP) then
                   NewState = State
 		  {Broadcast Players sayDamageTaken(RET_ID RET_DMG RET_HP)}
@@ -268,8 +274,9 @@ in
 
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      proc{OneTurnThread H N State} NewState in
-	 if State.alive > 1 then %insérer vérif sur H ici
+      proc{OneTurnThread H N State} NewState Sy in
+         {Send State.sync sync(Sy)}
+	 if Sy then %insérer vérif sur H ici
 	    MidState1
             in
 
@@ -319,6 +326,7 @@ in
          if NextState.alive > 1 then
 	    {GameLoop NextState}
          end
+         {System.show 'game over'}
       else
 	 proc{Launcher L N State}
 	    case L of nil then skip
@@ -327,8 +335,27 @@ in
 	       {Launcher T N+1 State}
 	    end
 	 end
+         proc{StateSync Stream Remain}
+            case Stream
+            of nil then skip
+            []sync(Ret)|S then
+               if Remain > 1 then
+                  Ret = true
+               else
+                  Ret = false
+                  {System.show 'game over'}
+               end
+               {StateSync S Remain}
+            []dead|S then
+               {StateSync S Remain-1}
+            end
+         end %StateSync
+         SyncPort
+         Str
       in
-	 {Launcher Players 1 State}
+         SyncPort = {NewPort Str}
+         thread {StateSync Str Input.nbPlayer} end
+         {Launcher Players 1 {AdjoinList State [sync#SyncPort]}}
       end
    end
 
@@ -352,7 +379,5 @@ in
    {Delay 4000}
    {System.show 'starting game loop'}
    {GameLoop {CreateGameState}}
-
-   {System.show 'game over'}
 
 end
