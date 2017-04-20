@@ -42,11 +42,11 @@ define
 in
 
 %%%% Style of game %%%%
-   
+
    IsTurnByTurn = false
 
 %%%% Description of the map %%%%
-   
+
    NRow = 10
    NColumn = 10
 
@@ -62,18 +62,18 @@ in
 	  [0 0 0 0 0 0 0 0 0 0]]
 
 %%%% Players description %%%%
-   
+
    NbPlayer = 2
    Players = [player101RandomAI player100TargetPractice]
    Colors = [green yellow]
 
 %%%% Thinking parameters (only in simultaneous) %%%%
-   
+
    ThinkMin = 500
    ThinkMax = 3000
 
 %%%% Surface time/turns %%%%
-   
+
    TurnSurface = 3
 
 %%%% Life %%%%
@@ -81,19 +81,19 @@ in
    MaxDamage = 4
 
 %%%% Number of load for each item %%%%
-   
+
    Missile = 3
    Mine = 3
    Sonar = 3
    Drone = 3
 
 %%%% Distances of placement %%%%
-   
+
    MinDistanceMine = 1
    MaxDistanceMine = 2
    MinDistanceMissile = 1
    MaxDistanceMissile = 4
 
 
-   
+
 end

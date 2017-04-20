@@ -15,7 +15,7 @@ define
    UpdateState
    MapRandomPos
    MapIsWater
-   
+
    InitPosition
    Move
    Dive
@@ -68,7 +68,7 @@ in
       NewState = {Sub MidState Input.nbPlayer}
       NewState
    end
-   
+
    %Update un State avec une liste de tuple contenant les valeurs qui ont changé
    % state(a:1 b:2) + [b#3] = state(a:1 b:3)
    fun{UpdateState State L}
@@ -78,7 +78,7 @@ in
    fun{MapRandomPos}
       pt(x:({OS.rand} mod Input.nRow + 1) y:({OS.rand} mod Input.nColumn + 1))
    end
-   
+
    fun{MapIsWater Pos}
       if {List.nth {List.nth Input.map Pos.x} Pos.y} == 0 then
 	 true
@@ -86,12 +86,12 @@ in
 	 false
       end
    end
-   
+
 
 %%%%%%%
 
    %les fonctions ci-dessous représentent le comportement du sub
-   
+
    fun{InitPosition State ID Position}
       fun{NewPos} Pos in
 	 Pos = {MapRandomPos}
@@ -112,7 +112,7 @@ in
    end
 
 %%%
-   
+
    fun{Move State ID Position Direction}
       fun{CanMove State Pos}
 	 fun{Visited State Pos}
@@ -186,7 +186,6 @@ in
       end
       Ret
    in
-      {Browser.browse State.visited}
       Ret = {RandomMove State}
       case Ret
       of ret(NewDir NewState) then
@@ -198,14 +197,14 @@ in
    end
 
 %%%
-   
+
    fun{Dive State} NewState in
       NewState = {UpdateState State [surf#false]}
       NewState
    end
 
 %%%
-   
+
    fun{ChargeItem State ID KindItem} NewState in
       if State.missileCharge<Input.missile then
 	 NewState = {UpdateState State [missileCharge#State.missileCharge+1]}
@@ -247,8 +246,8 @@ in
       NewState
    end
 
-%%%   
-   
+%%%
+
    fun{FireItem State ID KindFire}
       fun{DistTo Pos1 Pos2}
 	 {Number.abs Pos1.x-Pos2.x} + {Number.abs Pos1.y-Pos2.y}
@@ -266,7 +265,6 @@ in
 	    KindFire = null
 	 end
       []N then
-	 {System.show tryFireMissile(N)}
 	 if State.enemies.N.spotted andthen State.missileCharge == Input.missile andthen {DistTo State.pos State.enemies.N.pos} =< Input.maxDistanceMissile andthen {DistTo State.pos State.enemies.N.pos} >= Input.minDistanceMissile then
 	    %FIRE THE MISSILE
 	    KindFire = missile(State.enemies.N.pos)
@@ -281,14 +279,14 @@ in
    end
 
 %%%
-   
+
    fun{FireMine State ID Mine}
       ID = State.id
       Mine = null
       State
    end
 
-%%%   
+%%%
 
    fun{IsSurface State ID Answer}
       ID = State.id
@@ -297,7 +295,7 @@ in
    end
 
 %%%
-   
+
    fun{SayMove State ID Direction} N StateN StateEn NewState in
       N = ID.id
       if State.enemies.N.spotted then
@@ -326,25 +324,25 @@ in
    end
 
 %%%
-   
+
    fun{SaySurface State ID}
       State
    end
 
 %%%
-   
+
    fun{SayCharge State ID KindItem}
       State
    end
 
 %%%
-   
+
    fun{SayMinePlaced State ID}
       State
    end
 
 %%%
-   
+
    fun{SayMissileExplode State ID Position Message}
       fun{DistToSub State Pos}
 	 {Number.abs State.pos.x - Pos.x} + {Number.abs State.pos.y - Pos.y}
@@ -377,7 +375,7 @@ in
    end
 
 %%%
-   
+
    fun{SayMineExplode State ID Position Message}
       fun{DistToSub State Pos}
 	 {Number.abs State.pos.x - Pos.x} + {Number.abs State.pos.y - Pos.y}
@@ -410,7 +408,7 @@ in
    end
 
 %%%
-   
+
    fun{SayPassingDrone State Drone ID Answer}
       case Drone
       of drone(row X) then
@@ -431,13 +429,13 @@ in
    end
 
 %%%
-   
+
    fun{SayAnswerDrone State Drone ID Answer}
       State
    end
 
 %%%
-   
+
    fun{SayPassingSonar State ID Answer}
       ID = State.id
       Answer = State.pos
@@ -445,7 +443,7 @@ in
    end
 
 %%%
-   
+
    fun{SayAnswerSonar State ID Answer} StateN StateEn NewState in
       if ID \= State.id then
 	 StateN = {UpdateState State.enemies.(ID.id) [pos#Answer spotted#true]}
@@ -458,19 +456,19 @@ in
    end
 
 %%%
-   
+
    fun{SayDeath State ID}
       State
    end
 
 %%%
-   
+
    fun{SayDamageTaken State ID Damage LifeLeft}
       State
    end
-   
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   
+
    fun{StartPlayer Color ID}
       Stream
       Port
@@ -483,12 +481,12 @@ in
       end
       Port
    end
-   
+
    proc{TreatStream Stream State}
       %Le State va être les infos sur notre Sub, ou autre chose
       %Pv, position, munitions, ...
       %state(id:ID pos:POS  ...)
-      
+
       case Stream
       of nil then skip
       []initPosition(ID Position)|S then NewState in
