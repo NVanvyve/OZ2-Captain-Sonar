@@ -3,7 +3,7 @@ import
    GUI
    Input
    PlayerManager
-   
+
    Browser %debug
    System %debug
 define
@@ -19,7 +19,7 @@ define
 in
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   
+
    fun{CreatePlayers} %retourne une liste de ports
       fun{Sub ID NbPlayer Players Colors}
 	 if(ID =< NbPlayer) then
@@ -67,7 +67,7 @@ in
    in
       {Sub Players}
    end
-      
+
    proc{Broadcast L Msg} %L une liste de ports
       case L
       of nil then
@@ -117,7 +117,7 @@ in
 	       FM_ID
 	       FM_Mine
 	    in
-	       
+
 	       {System.show move}
 	       %Mouvement
 	       {Send H move(M_ID M_Pos M_Dir)}
@@ -163,7 +163,7 @@ in
 			   {Broadcast Players sayDeath(RET_ID)}
 			   {Send GuiPort removePlayer(RET_ID)}
 			[]sayDamageTaken(RET_ID RET_DMG RET_HP) then
-			   {Broadcast Players sayDamageTaken(RET_ID RET_DMG RET_HP)} 
+			   {Broadcast Players sayDamageTaken(RET_ID RET_DMG RET_HP)}
 			   {Send GuiPort lifeUpdate(RET_ID RET_HP)}
 			end
 			{BroadcastMissile T Pos}
@@ -225,7 +225,7 @@ in
 		  {Send GuiPort removeMine(FM_ID FM_Mine)}
 	       end
 	       NewState = MidState2
-	       
+
 	    else %Si on est en surface
 	       NewState = MidState1
 	    end
@@ -235,7 +235,7 @@ in
 	 end
       end %OneTurn
 
-      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       
       proc{OneTurnThread H N State} NewState in
 	 if true then %insérer vérif sur H ici
@@ -413,22 +413,22 @@ in
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   
+
    %CREATING THE GUI
    GuiPort = {GUI.portWindow}
    {Send GuiPort buildWindow}
 
    %CREATE PORT FOR EVERY PLAYER USING PLAYERMANAGER AND ASSIGN ID
    Players = {CreatePlayers}
-   
+
    %ASK EVERY PLAYER TO INIT
    {System.show 'starting player init'}
    {InitPlayers}
-   
+
    %WHEN EVERY PLAYER HAS SET UP LAUNCH THE GAME
    {Delay 4000}
    {System.show 'starting game loop'}
    {GameLoop {CreateGameState}}
 
-   
+
 end
