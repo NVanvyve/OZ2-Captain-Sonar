@@ -151,13 +151,13 @@ in
 		     {SubRandom Try-1 Pos}
 		  end
 	       [] 1 then
-		   if {CanMove State pt(x:Pos.x-1 y:Pos.y)} then
+		  if {CanMove State pt(x:Pos.x-1 y:Pos.y)} then
 		     move(north pt(x:Pos.x-1 y:Pos.y))
 		  else
 		     {SubRandom Try-1 Pos}
 		  end
 	       [] 2 then
-		   if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
+		  if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
 		     move(west pt(x:Pos.x y:Pos.y-1))
 		  else
 		     {SubRandom Try-1 Pos}
