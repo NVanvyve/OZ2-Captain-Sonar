@@ -4,7 +4,7 @@ import
    Input
    PlayerManager
 
-   Browser %debug
+   %Browser %debug
    System %debug
 define
    GuiPort %Port du GUI
@@ -22,7 +22,6 @@ define
    GL_Charge
    GL_Fire
    GL_Explode
-   
 in
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -246,136 +245,38 @@ in
             MidState4
          in
 
-	    {System.show actions(MidState1.N.surf)}
-	    %Si on est sous l'eau, on fait le reste des actions
-	    if MidState1.N.surf == false then
-	       MidState2
-	       M_ID
-	       M_Pos
-	       M_Dir
-	       CI_ID
-	       CI_KindItem
-	       FI_ID
-	       FI_KindFire
-	       FM_ID
-	       FM_Mine
-	    in
-
-	       {System.show move}
-	       %Mouvement
-	       {Send H move(M_ID M_Pos M_Dir)}
-	       if M_Dir == surface then StateN in
-		  StateN = {AdjoinList State.N [remainSurf#Input.turnSurface surf#true]}
-		  MidState2 = {AdjoinList MidState1 [N#StateN]}
-		  {Send GuiPort surface(M_ID)}
-		  {Broadcast Players saySurface(M_ID)}
-	       else
-		  {Broadcast Players sayMove(M_ID M_Dir)}
-		  {Send GuiPort movePlayer(M_ID M_Pos)}
-		  MidState2 = MidState1
-	       end
+            {System.show move}
+            %Mouvement
+            MidState2 = {GL_Move MidState1 GuiPort H N}
 
             {System.show charge}
             %ChargeItem
             {GL_Charge H Players}
 
-	       {System.show fire}
-	       %Fireitem
-	       {Send H fireItem(FI_ID FI_KindFire)}
-	       case FI_KindFire
-	       of null then
-		  skip
-	       []mine(Pos) then %Mine
-		  {Broadcast Players sayMinePlaced(FI_ID)}
-		  {Send GuiPort putMine(FI_ID Pos)}
-	       []missile(Pos) then %Missile
-		  proc{BroadcastMissile L Pos}
-		     case L
-		     of nil then skip
-		     []H|T then Msg in
-			{Send H sayMissileExplode(FI_ID Pos Msg)}
-			case Msg
-			of null then skip
-			[]sayDeath(RET_ID) then
-			   {Broadcast Players sayDeath(RET_ID)}
-			   {Send GuiPort removePlayer(RET_ID)}
-			[]sayDamageTaken(RET_ID RET_DMG RET_HP) then
-			   {Broadcast Players sayDamageTaken(RET_ID RET_DMG RET_HP)}
-			   {Send GuiPort lifeUpdate(RET_ID RET_HP)}
-			end
-			{BroadcastMissile T Pos}
-		     end
-		  end
-	       in
-		  {Browser.browse missile(Pos)}
-		  {BroadcastMissile Players Pos}
-	       []drone(Dir Val) then %Drone
-		  proc{BroadcastDrone L Dir Val}
-		     case L
-		     of nil then skip
-		     []He|T then PD_ID PD_ANS in
-			{Send He sayPassingDrone(drone(Dir Val) PD_ID PD_ANS)}
-			{Send H sayAnswerDrone(drone(Dir Val) PD_ID PD_ANS)}
-			{BroadcastDrone T Dir Val}
-		     end
-		  end
-	       in
-		  {BroadcastDrone Players Dir Val}
-	       []sonar then %Sonar
-		  proc{BroadcastSonar L}
-		     case L
-		     of nil then skip
-		     []He|T then PS_ID PS_ANS in
-			{Send He sayPassingSonar(PS_ID PS_ANS)}
-			{Send H sayAnswerSonar(PS_ID PS_ANS)}
-			{BroadcastSonar T}
-		     end
-		  end
-	       in
-		  {BroadcastSonar Players}
-	       end
+            {System.show fire}
+            %Fireitem
+            MidState3 = {GL_Fire MidState2 GuiPort Players H N}
 
-	       {System.show explode}
-	       %ExplodeMine
-	       {Send H fireMine(FM_ID FM_Mine)}
-	       case FM_Mine of null then skip
-	       []pt(x:X y:Y) then
-		  proc{BroadcastMine L Pos}
-		     case L
-		     of nil then skip
-		     []H|T then Msg in
-			{Send H sayMineExplode(FM_ID Pos Msg)}
-			case Msg
-			of null then skip
-			[]sayDeath(RET_ID) then
-			   {Broadcast Players sayDeath(RET_ID)}
-			   {Send GuiPort removePlayer(RET_ID)}
-			[]sayDamageTaken(RET_ID RET_DMG RET_HP) then
-			   {Broadcast Players sayDamageTaken(RET_ID RET_DMG RET_HP)}
-			   {Send GuiPort lifeUpdate(RET_ID RET_HP)}
-			end
-			{BroadcastMine T Pos}
-		     end
-		  end
-	       in
-		  {BroadcastMine Players pt(X Y)}
-		  {Send GuiPort removeMine(FM_ID FM_Mine)}
-	       end
-	       NewState = MidState2
+            {System.show explode}
+            %ExplodeMine
+            MidState4 = {GL_Explode MidState3 GuiPort Players H N}
 
-	    else %Si on est en surface
-	       NewState = MidState1
-	    end
+            NewState = MidState4
+
+         else %Si on est en surface
+            NewState = MidState1
+         end
 	    {System.show endTurn}
 	    {Delay 500}
 	    {OneTurn T N+1 NewState}
 	 end
       end %OneTurn
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      proc{OneTurnThread H N State} NewState in
-	 if true then %insérer vérif sur H ici
+      proc{OneTurnThread H N State} NewState Sy in
+         {Send State.sync sync(Sy)}
+	 if Sy then %insérer vérif sur H ici
 	    MidState1
             in
 
@@ -478,6 +379,5 @@ in
    {Delay 4000}
    {System.show 'starting game loop'}
    {GameLoop {CreateGameState}}
-
 
 end
