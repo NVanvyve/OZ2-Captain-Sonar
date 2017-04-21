@@ -1,4 +1,7 @@
 functor
+import
+   MapGenerator
+   System
 export
    isTurnByTurn:IsTurnByTurn
    nRow:NRow
@@ -47,9 +50,13 @@ in
 
 %%%% Description of the map %%%%
 
-   NRow = 10
-   NColumn = 10
+   NRow = 12
+   NColumn = 25
 
+   Map = _
+   {MapGenerator.map Map NRow NColumn}
+
+   /*
    Map = [[0 0 0 0 0 0 0 0 0 0]
 	  [0 0 0 0 0 0 0 0 0 0]
 	  [0 0 0 1 1 0 0 0 0 0]
@@ -60,6 +67,7 @@ in
 	  [0 0 1 1 0 0 1 0 0 0]
 	  [0 0 0 0 0 0 0 0 0 0]
 	  [0 0 0 0 0 0 0 0 0 0]]
+   */
 
 %%%% Players description %%%%
 
