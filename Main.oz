@@ -22,6 +22,7 @@ define
    GL_Charge
    GL_Fire
    GL_Explode
+   
 in
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -372,7 +373,7 @@ in
       end %OneTurn
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      
+
       proc{OneTurnThread H N State} NewState in
 	 if true then %insérer vérif sur H ici
 	    MidState1
