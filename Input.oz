@@ -1,7 +1,6 @@
 functor
 import
    MapGenerator
-   System
 export
    isTurnByTurn:IsTurnByTurn
    nRow:NRow
@@ -46,12 +45,12 @@ in
 
 %%%% Style of game %%%%
 
-   IsTurnByTurn = false
+   IsTurnByTurn = true
 
 %%%% Description of the map %%%%
 
-   NRow = 12
-   NColumn = 25
+   NRow = 10
+   NColumn = 10
 
    Map = _
    {MapGenerator.map Map NRow NColumn}
@@ -71,14 +70,14 @@ in
 
 %%%% Players description %%%%
 
-   NbPlayer = 2
-   Players = [player101RandomAI player100TargetPractice]
-   Colors = [green yellow]
+   NbPlayer = 3
+   Players = [player010DrunkAI player010DrunkAI player010DroneMasterAI]
+   Colors = [yellow red green]
 
 %%%% Thinking parameters (only in simultaneous) %%%%
 
-   ThinkMin = 500
-   ThinkMax = 3000
+   ThinkMin = 100
+   ThinkMax = 300
 
 %%%% Surface time/turns %%%%
 

@@ -1,8 +1,9 @@
 functor
 import
-   %Une bibliothèque de joueurs
-   Player101RandomAI
-   Player100TargetPractice
+   Player010DrunkAI
+   Player010TargetPractice
+   Player010DroneMasterAI
+   Player033RandAI
 export
    playerGenerator:PlayerGenerator
 define
@@ -10,10 +11,14 @@ define
 in
    fun{PlayerGenerator Kind Color ID}
       case Kind
-      of player101RandomAI then
-	 {Player101RandomAI.portPlayer Color ID}
-      [] player100TargetPractice then
-	 {Player100TargetPractice.portPlayer Color ID}	
+      of player010DrunkAI then
+	 {Player010DrunkAI.portPlayer Color ID}
+      [] player010TargetPractice then
+	 {Player010TargetPractice.portPlayer Color ID}
+      %[] player010DroneMasterAI then
+   	 %{Player010DroneMasterAI.portPlayer Color ID}
+      [] player033RandAI then
+         {Player033RandAI.portPlayer Color ID}
       end
    end
 end

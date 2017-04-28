@@ -1,7 +1,6 @@
 functor
 import
    OS
-   System
 export
    map:MapExp
 define
@@ -11,8 +10,8 @@ define
    Isles
 in
 
-   LandMass = 30 %Pourcentage de cases occupées par des îles
-   Isles = 8 %Nombre d'îles
+   LandMass = 20 %Pourcentage de cases occupées par des îles
+   Isles = 2 %Nombre d'îles
 
    fun{Generator NRow NColumn LandMass Isles}
       fun{RandomIsles N}
@@ -59,8 +58,6 @@ in
 		  end
 	       end
 	    in
-               {System.show Pos.x#Pos.y}
-               {System.show Map}
 	       if {List.nth {List.nth Map Pos.x} Pos.y} == 0 then
 		  {AddLand Pos Map 1}
 	       else Rand in
@@ -116,18 +113,13 @@ in
       EmptyMap
       State
    in
-      {System.show b1}
       IslesPos = {RandomIsles Isles}
-      {System.show b2}
       EmptyMap = {NewMap NRow NColumn}
-      {System.show b3}
       State = state(remain:(NRow*NColumn*LandMass div 100) isl:IslesPos map:EmptyMap)
-      {System.show b4}
       {FillMap State NRow NColumn}
    end
 
    proc{MapExp EXP NRow NColumn}
-      {System.show c1}
       EXP = {Generator NRow NColumn LandMass Isles}
    end
 end
