@@ -186,6 +186,7 @@ in
       NewState
       Ret
    in
+      {System.show State}
       if (State.focus \= null) then
 	 N = State.focus
 	 Xn = State.enemies.N.pos.x
@@ -346,6 +347,7 @@ in
 	 Position = NewState.pos
 	 ID = NewState.id
       end
+      {System.show 'End of move'}
       NewState
    end
 
@@ -484,7 +486,7 @@ in
       end
       ID = NewState.id
       {System.show 'FireItem'}
-     % %{System.show NewState}
+      {System.show NewState}
       NewState
    end
 
@@ -524,6 +526,7 @@ in
 	       else
 		  YS = true
 		  XS = false
+                  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x+1 y:Npos.y))]}
 	       end
 	    [] south then
 	       if( (Npos.x-1) > 0 andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
@@ -532,6 +535,7 @@ in
 	       else
 		  YS = true
 		  XS = false
+                  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x-1 y:Npos.y))]}
 	       end
 	    [] east then
 	       if ((Npos.y+1) =< Input.nColumn andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
@@ -540,6 +544,7 @@ in
 	       else
 		  XS = true
 		  YS = false
+                  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x y:Npos.y+1))]}
 	       end
 	    [] west then
                if ((Npos.x-1) > 0 andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
@@ -548,6 +553,7 @@ in
 	       else
 		  XS = true
 		  YS = false
+                  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x y:Npos.y-1))]}
 	       end
 	    end
 	    if ((XS == true orelse XS==false) andthen N=<Input.nbPlayer) then
@@ -555,9 +561,13 @@ in
                StateY = {UpdateState State.ysure [N#YS]}
 	    end
 	    StateEn = {UpdateState State.enemies [N#StateN]}
-	    if (State.xsure.N == true orelse State.ysure.N == true) then
+            {System.show XS}
+	    if (XS \= null) then
+               {System.show 'A'}
 	       if (State.focus==null) then
+                  {System.show 'B'}
 		  NewState = {UpdateState State [focus#N enemies#StateEn]}
+                  {System.show NewState}
 	       end
 	    else
 	       if (XS \= null) then
@@ -573,7 +583,7 @@ in
 	 NewState = State
       end
       {System.show 'SayMove'}
-      %{System.show NewState}
+      {System.show NewState}
       NewState
    end
 
@@ -629,8 +639,6 @@ in
       else
 	 Message = null
       end
-      {System.show 'SayMissileExplode'}
-      %{System.show NewState}
       NewState
    end
 
@@ -665,8 +673,6 @@ in
       else
 	 Message = null
       end
-      {System.show 'SayMineExplode'}
-      %{System.show NewState}
       NewState
    end
 
@@ -700,7 +706,6 @@ in
       N = ID.id
       %Bloque parfois ici wtf...
       Npos = State.enemies.N.pos
-      {System.show Npos}
       case Drone
       of drone(row X) then
 	 if Answer == true then
