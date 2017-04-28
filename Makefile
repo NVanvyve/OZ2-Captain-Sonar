@@ -1,7 +1,7 @@
 all :compile
 
 compile :
-	@ozc -c GUI.oz Input.oz Main.oz MapGenerator.oz PlayerXXXSmart1.oz Player100TargetPractice.oz Player101RandomAI.oz PlayerManager.oz
+	@ozc -c *oz
 
 start :
 	@ozengine Main.ozf
