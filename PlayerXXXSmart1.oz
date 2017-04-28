@@ -493,8 +493,11 @@ in
       N = ID.id
       Pos = State.pos
       if (ID \= State.id) then
+        {System.show 'A'}
 	 Npos = State.enemies.N.pos
 	 if Npos \= null then
+         {System.show 'B'}
+
 	    case Direction of north then
 	       if ((Npos.x+1) =< Input.nRow andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0 ) then
 		  StateN = {UpdateState Npos [pos#(Npos.x+1)]}
@@ -528,21 +531,30 @@ in
 		  YS = false
 	       end
 	    end
+            {System.show 'C'}
+            {System.show XS}
+
 	    if (XS == true orelse XS==false) then
 	       StateX = {UpdateState State.xsure [N#XS]}
 	       StateY = {UpdateState State.ysure [N#YS]}
 	    end
+            {System.show 'D'}
+
 	    StateEn = {UpdateState State.enemies [N#StateN]}
 	    if (State.xsure.N == true orelse State.ysure.N == true) then
 	       if (State.focus==null) then
 		  NewState = {UpdateState State [focus#N enemies#StateEn]}
 	       end
+               {System.show 'E'}
+
 	    else
 	       if (XS \= null) then
 		  NewState = {UpdateState State [enemies#StateEn xsure#StateX ysure#StateY]}
 	       else
 		  NewState = {UpdateState State [enemies#StateEn]}
 	       end
+               {System.show 'F'}
+
 	    end
 	 else
 	    NewState = State
@@ -584,7 +596,6 @@ in
       NewState
       MidState
       Dist
-      NP
    in
       Dist = {DistToSub State.pos Position}
       if Dist == 0 then
