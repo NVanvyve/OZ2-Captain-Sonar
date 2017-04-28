@@ -360,6 +360,7 @@ in
 %%%
 
 
+
    %Donne au Sub la permission de charger un item de son choix
    fun{ChargeItem State ID KindItem} NewState in
       if (State.focus == null) then
@@ -367,36 +368,47 @@ in
 	    NewState = {UpdateState State [droneCharge#State.droneCharge+1 nextCharge#sonar]}
 	    if (NewState.droneCharge == Input.drone) then
 	       KindItem = drone
+               ID = NewState.id
 	    else
 	       KindItem = null
+               ID = NewState.id
 	    end
-	 elseif (State.sonarCharge<Input.sonar andthen State.nextCharge==sonar) then
-	    NewState = {UpdateState State [sonarCharge#State.sonarCharge+1 nextCharge#missile]}
-	    if (NewState.sonarCharge == Input.sonar) then
+	 elseif (State.sonarCharge<Input.sonar andthen State.nextCharge==sonar) then            %{System.show NewState}
+	    if (State.sonarCharge == Input.sonar-1) then
+               NewState = {UpdateState State [sonarCharge#State.sonarCharge+1 nextCharge#missile]}
 	       KindItem = sonar
 	    else
+               NewState = {UpdateState State [sonarCharge#State.sonarCharge+1]}
 	       KindItem = null
+               ID = NewState.id
 	    end
 	 elseif (State.missileCharge<Input.missile andthen State.nextCharge==missile) then
 	    NewState = {UpdateState State [missileCharge#State.missileCharge+1 nextCharge#drone]}
 	    if (NewState.missileCharge == Input.missile) then
 	       KindItem = missile
+               ID = NewState.id
 	    else
 	       KindItem = null
+               ID = NewState.id
 	    end
 	 elseif (State.focus \= null) then
 	    if (State.missileCharge<Input.missile) then
 	       NewState = {UpdateState State [missileCharge#State.missileCharge+1 nextCharge#sonar]}
 	       if (NewState.missileCharge == Input.missile) then
 		  KindItem = missile
+                  ID = NewState.id
 	       else
 		  KindItem = null
+                  ID = NewState.id
 	       end
 	    end
 	 else
 	    KindItem = null
+            ID = NewState.id
 	 end
       else
+         NewState = State
+         ID = NewState.id
 	 KindItem = null
       end
       NewState
@@ -428,21 +440,27 @@ in
       NewState
       MPos
    in
+     %{System.show State}
       case State.focus
       of null then
+         {System.show 'Pas de FOCUS'}
 	 if (State.sonarCharge==Input.sonar) then
             %FIRE SONAR
+            {System.show 'FireSonar'}
 	    KindFire = sonar
 	    NewState = {UpdateState State [sonarCharge#0 sonarLaunchOnce#true]}
-	 elseif State.droneCharge == Input.drone andthen sonarLaunchOnce==true then
+	 elseif State.droneCharge == Input.drone andthen State.sonarLaunchOnce==true then
             % FIRE DRONE
+            {System.show 'FireDrone'}
 	    KindFire = {RandForDrone}
 	    NewState = {UpdateState State [droneCharge#0]}
-	 elseif State.missileCharge == Input.missile then
+	elseif State.missileCharge == Input.missile then
             %FIRE THE MISSILE
+            %{System.show 'FireMissile?'}
 	    MPos = {PosMi Input.minDistanceMissile State.visited}
 	    if ({DistTo MPos State.pos}>=Input.minDistanceMissile andthen {DistTo MPos State.pos} =< Input.maxDistanceMissile) then
-	       KindFire = missile(State.visited)
+               {System.show 'FireMissile'}
+	       KindFire = missile(MPos)
 	       NewState = {UpdateState State [missileCharge#0]}
 	    else
 	       NewState = State
@@ -453,8 +471,10 @@ in
 	    KindFire = null
 	 end
       []N then
+         {System.show 'Focus'}
 	 if State.missileCharge == Input.missile andthen {DistTo State.pos State.enemies.N.pos} =< Input.maxDistanceMissile andthen {DistTo State.pos State.enemies.N.pos} >= Input.minDistanceMissile then
             %FIRE THE MISSILE
+            {System.show 'FireMissile - FOCUS'}
 	    KindFire = missile(State.enemies.N.pos)
 	    NewState = {UpdateState State [missileCharge#0]}
 	 else
@@ -463,6 +483,8 @@ in
 	 end
       end
       ID = NewState.id
+      {System.show 'FireItem'}
+     % %{System.show NewState}
       NewState
    end
 
@@ -493,14 +515,11 @@ in
       N = ID.id
       Pos = State.pos
       if (ID \= State.id) then
-        {System.show 'A'}
-	 Npos = State.enemies.N.pos
+         Npos = State.enemies.N.pos
 	 if Npos \= null then
-         {System.show 'B'}
-
 	    case Direction of north then
 	       if ((Npos.x+1) =< Input.nRow andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0 ) then
-		  StateN = {UpdateState Npos [pos#(Npos.x+1)]}
+		  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x+1 y:Npos.y))]}
                   XS = null
 	       else
 		  YS = true
@@ -508,7 +527,7 @@ in
 	       end
 	    [] south then
 	       if( (Npos.x-1) > 0 andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
-		  StateN = {UpdateState Npos [pos#Npos.x-1]}
+		  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x-1 y:Npos.y))]}
                   XS = null
 	       else
 		  YS = true
@@ -516,45 +535,36 @@ in
 	       end
 	    [] east then
 	       if ((Npos.y+1) =< Input.nColumn andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
-		  StateN = {UpdateState Npos [pos#Npos.y+1]}
+		  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x y:Npos.y+1))]}
                   XS = null
 	       else
 		  XS = true
 		  YS = false
 	       end
 	    [] west then
-	       if ((Npos.x-1) > 0 andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
-		  StateN = {UpdateState Npos [pos#Npos.y-1]}
+               if ((Npos.x-1) > 0 andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
+		  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x y:Npos.y-1))]}
                   XS = null
 	       else
 		  XS = true
 		  YS = false
 	       end
 	    end
-            {System.show 'C'}
-            {System.show XS}
-
-	    if (XS == true orelse XS==false) then
-	       StateX = {UpdateState State.xsure [N#XS]}
-	       StateY = {UpdateState State.ysure [N#YS]}
+	    if ((XS == true orelse XS==false) andthen N=<Input.nbPlayer) then
+               StateX = {UpdateState State.xsure [N#XS]}
+               StateY = {UpdateState State.ysure [N#YS]}
 	    end
-            {System.show 'D'}
-
 	    StateEn = {UpdateState State.enemies [N#StateN]}
 	    if (State.xsure.N == true orelse State.ysure.N == true) then
 	       if (State.focus==null) then
 		  NewState = {UpdateState State [focus#N enemies#StateEn]}
 	       end
-               {System.show 'E'}
-
 	    else
 	       if (XS \= null) then
 		  NewState = {UpdateState State [enemies#StateEn xsure#StateX ysure#StateY]}
 	       else
 		  NewState = {UpdateState State [enemies#StateEn]}
 	       end
-               {System.show 'F'}
-
 	    end
 	 else
 	    NewState = State
@@ -562,6 +572,8 @@ in
       else
 	 NewState = State
       end
+      {System.show 'SayMove'}
+      %{System.show NewState}
       NewState
    end
 
@@ -617,6 +629,8 @@ in
       else
 	 Message = null
       end
+      {System.show 'SayMissileExplode'}
+      %{System.show NewState}
       NewState
    end
 
@@ -624,14 +638,14 @@ in
 
    %Annonce l'explosion d'une mine, le Sub doit dire s'il a été touché
    fun{SayMineExplode State ID Position Message}
-      fun{DistToSub State Pos}
-	 {Number.abs State.pos.x - Pos.x} + {Number.abs State.pos.y - Pos.y}
+      fun{DistToSub Pos1 Pos2}
+	 {Number.abs Pos1.x-Pos2.x} + {Number.abs Pos1.y-Pos2.y}
       end
       NewState
       MidState
       Dist
    in
-      Dist = {DistToSub State Position}
+      Dist = {DistToSub State.pos Position}
       if Dist == 0 then
 	 MidState = {UpdateState State [hp#(State.hp-2)]}
       elseif Dist == 1 then
@@ -651,6 +665,8 @@ in
       else
 	 Message = null
       end
+      {System.show 'SayMineExplode'}
+      %{System.show NewState}
       NewState
    end
 
@@ -680,28 +696,37 @@ in
 
    %Réponse au drone que l'on a lancé
    fun{SayAnswerDrone State Drone ID Answer}
-      StateN StateEn NewState StateX StateY N in
+      StateN StateEn NewState StateX StateY N Npos in
       N = ID.id
+      %Bloque parfois ici wtf...
+      Npos = State.enemies.N.pos
+      {System.show Npos}
       case Drone
       of drone(row X) then
 	 if Answer == true then
-	    if ID \= State.id then
+	    if N \= State.id.id then
 	       StateX = {UpdateState State.xsure [N#true]}
-	       StateN = {UpdateState State.enemies.N [pos.x#X]}
+               StateN = {UpdateState State.enemies.N [pos#(pt(x:X y:Npos.y))]}
 	       StateEn = {UpdateState State.enemies [N#StateN] }
 	       NewState = {UpdateState State [enemies#StateEn xsure#StateX]}
+               %{System.show NewState}
+            else
+               NewState = State
 	    end
 	 else
 	    NewState = State
 	 end
       []drone(column Y) then
 	 if Answer == true then
-	    if ID \= State.id then
+	    if N \= State.id.id then
 	       StateY = {UpdateState State.ysure [N#true]}
-	       StateN = {UpdateState State.enemies.N [pos.y#Y]}
+	       StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x y:Y))]}
 	       StateEn = {UpdateState State.enemies [N#StateN] }
 	       NewState = {UpdateState State [enemies#StateEn ysure#StateY]}
-	    end
+               %{System.show NewState}
+            else
+               NewState = State
+            end
 	 else
 	    NewState = State
 	 end
@@ -747,7 +772,7 @@ in
       StateEn = {Record.subtract State.enemies ID}
       X = {Record.subtract State.xsure ID}
       Y = {Record.subtract State.ysure ID}
-      if State.focus == ID then
+      if State.focus\= null andthen State.focus == ID then
 	 NewState = {UpdateState State [enemies#StateEn focus#null X Y]}
       else
 	 NewState = {UpdateState State [enemies#StateEn X Y]}
