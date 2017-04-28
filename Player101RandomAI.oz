@@ -3,8 +3,8 @@ import
    Input
 
    OS %rand
-   System %debug
-   Browser %debug
+   %System %debug
+   %Browser %debug
 export
    portPlayer:StartPlayer
 define

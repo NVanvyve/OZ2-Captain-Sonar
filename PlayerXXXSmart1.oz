@@ -3,7 +3,7 @@ import
    Input
 
    OS %rand
-   %System %debug
+   System %debug
    %Browser %debug
 export
    portPlayer:StartPlayer
@@ -13,8 +13,6 @@ define
 
    InitState
    UpdateState
-   MapRandomPos
-   MapIsWater
 
    InitPosition
    Move
@@ -35,9 +33,6 @@ define
    SayAnswerSonar
    SayDeath
    SayDamageTaken
-   CanMove
-   RandomMove
-   SmartMove
 in
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -47,7 +42,7 @@ in
 	    State
 	 else
 	    %Personnaliser le State de départ de chaque ennemi ici
-	    StateEn = {UpdateState State.enemies [N#enemy(pos:null xtrue:0 ytrue:0)]}
+	    StateEn = {UpdateState State.enemies [N#enemy(pos:null)]}
 	    NewState = {UpdateState State [enemies#StateEn]}
 	    {InitEnemies NewState N-1}
 	 end
@@ -59,8 +54,8 @@ in
       MidState = state(
 		    id:id(id:ID color:Color name:'Smart1')
 		    hp:Input.maxDamage
+		    nextCharge:sonar
 		    missileCharge:0
-		    mineCharge:0
 		    sonarCharge:0
 		    droneCharge:0
 		    enemies:data(1:null)
@@ -71,6 +66,7 @@ in
 		    focus:null
 		    xsure:xsure(1:null)
 		    ysure:ysure(1:null)
+		    sonarLaunchOnce:false
 		    )
       NewState = {InitEnemies MidState Input.nbPlayer}
       NewState
@@ -120,206 +116,215 @@ in
    end
 
 %%%
-   fun{CanMove State Pos}
-      fun{Visited State Pos}
-	 fun{Check L Pos}
-	    case L
-	    of nil then false
-	    []pt(x:X y:Y)|T then
-	       if Pos.x == X andthen Pos.y == Y then
-		  true
-	       else
-		  {Check T Pos}
+   fun{Move State ID Position Direction}
+      fun{CanMove State Pos}
+	 fun{Visited State Pos}
+	    fun{Check L Pos}
+	       case L
+	       of nil then false
+	       []pt(x:X y:Y)|T then
+		  if Pos.x == X andthen Pos.y == Y then
+		     true
+		  else
+		     {Check T Pos}
+		  end
+	       end
+	    end
+	 in
+	    {Check State.visited Pos}
+	 end
+      in
+	 if Pos.x>0 andthen Pos.x=<Input.nRow andthen Pos.y>0 andthen Pos.y=<Input.nColumn andthen  {List.nth {List.nth Input.map Pos.x} Pos.y} == 0 andthen {Visited State Pos} == false then
+	    true
+	 else
+	    false
+	 end
+      end
+      fun{RandomMove State}
+	 fun{SubRandom Try Pos}
+	    if Try == 0 then
+	       null
+	    else Rand in
+	       Rand = {OS.rand} mod 4
+	       case Rand
+	       of 0 then
+		  if {CanMove State pt(x:Pos.x+1 y:Pos.y)} then
+		     move(south pt(x:Pos.x+1 y:Pos.y))
+		  else
+		     {SubRandom Try-1 Pos}
+		  end
+	       [] 1 then
+		  if {CanMove State pt(x:Pos.x-1 y:Pos.y)} then
+		     move(north pt(x:Pos.x-1 y:Pos.y))
+		  else
+		     {SubRandom Try-1 Pos}
+		  end
+	       [] 2 then
+		  if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
+		     move(west pt(x:Pos.x y:Pos.y-1))
+		  else
+		     {SubRandom Try-1 Pos}
+		  end
+	       [] 3 then
+		  if {CanMove State pt(x:Pos.x y:Pos.y+1)} then
+		     move(east pt(x:Pos.x y:Pos.y+1))
+		  else
+		     {SubRandom Try-1 Pos}
+		  end
 	       end
 	    end
 	 end
       in
-	 {Check State.visited Pos}
+	 Msg = {SubRandom 10 State.pos}
       end
-      if Pos.x>0 andthen Pos.x=<Input.nRow andthen Pos.y>0 andthen Pos.y=<Input.nColumn andthen  {List.nth {List.nth Input.map Pos.x} Pos.y} == 0 andthen {Visited State Pos} == false then
-	 true
-      else
-	 false
-      end
-   end
-
-   fun{RandomMove State Pos}
-      fun{SubRandom Try Pos}
-	 if Try == 0 then
-	    null
-	 else Rand in
-	    Rand = {OS.rand} mod 4
-	    case Rand
-	    of 0 then
-	       if {CanMove State pt(x:Pos.x+1 y:Pos.y)} then
-		  move(south pt(x:Pos.x+1 y:Pos.y))
-	       else
-		  {SubRandom Try-1 Pos}
-	       end
-	    [] 1 then
-	       if {CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-		  move(north pt(x:Pos.x-1 y:Pos.y))
-	       else
-		  {SubRandom Try-1 Pos}
-	       end
-	    [] 2 then
-	       if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
-		  move(west pt(x:Pos.x y:Pos.y-1))
-	       else
-		  {SubRandom Try-1 Pos}
-	       end
-	    [] 3 then
-	       if {CanMove State pt(x:Pos.x y:Pos.y+1)} then
-		  move(east pt(x:Pos.x y:Pos.y+1))
-	       else
-		  {SubRandom Try-1 Pos}
-	       end
-	    end
-	 end
-      end
-   end
-
-   fun {SmartMove State Position} D N Xn Yn DistX DistY in
-      if State.focus \= null then
+      N
+      Xn
+      Yn
+      DistX
+      DistY
+      Msg
+      NewState
+      Ret
+   in
+      if (State.focus \= null) then
 	 N = State.focus
 	 Xn = State.enemies.N.pos.x
 	 Yn = State.enemies.N.pos.y
-	 D = {OS.rand} mod 2
 	 DistX = {Number.abs Position.x - Xn}
 	 DistY = {Number.abs Position.y - Yn}
-	 if DistX==0 then
-	    if (Position.x - Xn) < 0 then
-	       if {CanMove State pt(x:Position.x+1 y:Position.y)} then
-		  move(south pt(x:Position.x+1 y:Position.y))
+	 if (DistX==0) then
+	    if ((Position.x - Xn) < 0) then
+	       if ({CanMove State pt(x:Position.x+1 y:Position.y)}) then
+		  Msg = move(south pt(x:Position.x+1 y:Position.y))
 	       else
-		  if {List.nth {List.nth Input.map Pos.x+1} Pos.y} == 0 then
-		     surface
+		  if ({List.nth {List.nth Input.map Position.x+1} Position.y} == 0) then
+		     Msg = null
 		  else
-		     if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
-			move(west pt(x:Pos.x y:Pos.y-1))
-		     elseif {CanMove State pt(x:Pos.x y:Pos.y+1)} then
-			move(east pt(x:Pos.x y:Pos.y+1))
-		     elseif{CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-			move(north pt(x:Pos.x-1 y:Pos.y))
+		     if ({CanMove State pt(x:Position.x y:Position.y-1)}) then
+			Msg = move(west pt(x:Position.x y:Position.y-1))
+		     elseif ({CanMove State pt(x:Position.x y:Position.y+1)}) then
+			Msg = move(east pt(x:Position.x y:Position.y+1))
+		     elseif({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+			Msg = move(north pt(x:Position.x-1 y:Position.y))
 		     end
 		  end
 	       end
 	    else
-	       if {CanMove State pt(x:Position.x-1 y:Position.y)} then
-		  move(north pt(x:Position.x-1 y:Position.y))
+	       if ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+		  Msg = move(north pt(x:Position.x-1 y:Position.y))
 	       else
-		  if {List.nth {List.nth Input.map Pos.x-1} Pos.y} == 0 then
-		     surface
+		  if ({List.nth {List.nth Input.map Position.x-1} Position.y} == 0) then
+		     Msg = null
 		  else
-		     if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
-			move(west pt(x:Pos.x y:Pos.y-1))
-		     elseif {CanMove State pt(x:Pos.x y:Pos.y+1)} then
-			move(east pt(x:Pos.x y:Pos.y+1))
-		     else{CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-			move(south pt(x:Pos.x+1 y:Pos.y))
+		     if ({CanMove State pt(x:Position.x y:Position.y-1)}) then
+			Msg = move(west pt(x:Position.x y:Position.y-1))
+		     elseif ({CanMove State pt(x:Position.x y:Position.y+1)}) then
+			Msg = move(east pt(x:Position.x y:Position.y+1))
+		     elseif({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+			Msg = move(south pt(x:Position.x+1 y:Position.y))
 		     end
 		  end
 	       end
 	    end
-	 elseif DistY==0 then
-	    if (Position.x - Xn) < 0 then
-	       if {CanMove State pt(x:Position.x y:Position.y+1)} then
-		  move(east pt(x:Position.x y:Position.y+1))
+	 elseif (DistY==0) then
+	    if ((Position.x - Xn) < 0) then
+	       if ({CanMove State pt(x:Position.x y:Position.y+1)}) then
+		  Msg = move(east pt(x:Position.x y:Position.y+1))
 	       else
-		  if {List.nth {List.nth Input.map Pos.x} Pos.y+1} == 0 then
-		     surface
+		  if ({List.nth {List.nth Input.map Position.x} Position.y+1} == 0) then
+		     Msg = null
 		  else
-		     if {CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-			move(north pt(x:Pos.x-1 y:Pos.y))
-		     elseif {CanMove State pt(x:Pos.x+1 y:Pos.y)} then
-			move(south pt(x:Pos.x+1 y:Pos.y))
-		     elseif{CanMove State pt(x:Pos.x y:Pos.y-1)} then
-			move(west pt(x:Pos.x y:Pos.y-1))
+		     if ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+			Msg = move(north pt(x:Position.x-1 y:Position.y))
+		     elseif ({CanMove State pt(x:Position.x+1 y:Position.y)}) then
+			Msg = move(south pt(x:Position.x+1 y:Position.y))
+		     elseif({CanMove State pt(x:Position.x y:Position.y-1)}) then
+			Msg = move(west pt(x:Position.x y:Position.y-1))
 		     end
 		  end
 	       end
 	    else
-	       if {CanMove State pt(x:Position.x-1 y:Position.y)} then
-		  move(north pt(x:Position.x-1 y:Position.y))
+	       if ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+		  Msg = move(north pt(x:Position.x-1 y:Position.y))
 	       else
-		  if {List.nth {List.nth Input.map Pos.x-1} Pos.y} == 0 then
-		     surface
+		  if ({List.nth {List.nth Input.map Position.x-1} Position.y} == 0) then
+		     Msg = null
 		  else
-		     if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
-			move(west pt(x:Pos.x y:Pos.y-1))
-		     elseif {CanMove State pt(x:Pos.x y:Pos.y+1)} then
-			move(east pt(x:Pos.x y:Pos.y+1))
-		     else{CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-			move(south pt(x:Pos.x+1 y:Pos.y))
+		     if ({CanMove State pt(x:Position.x y:Position.y-1)}) then
+			Msg = move(west pt(x:Position.x y:Position.y-1))
+		     elseif ({CanMove State pt(x:Position.x y:Position.y+1)}) then
+			Msg = move(east pt(x:Position.x y:Position.y+1))
+		     elseif ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+			Msg = move(south pt(x:Position.x+1 y:Position.y))
 		     end
 		  end
 	       end
 	    end
 	 else
-	    if DistX > DistY then
-	       if (Position.x - Xn) < 0 then
-		  if {CanMove State pt(x:Position.x+1 y:Position.y)} then
-		     move(south pt(x:Position.x+1 y:Position.y))
+	    if (DistX > DistY) then
+	       if ((Position.x - Xn) < 0) then
+		  if ({CanMove State pt(x:Position.x+1 y:Position.y)}) then
+		     Msg = move(south pt(x:Position.x+1 y:Position.y))
 		  else
-		     if {List.nth {List.nth Input.map Pos.x+1} Pos.y} == 0 then
-			surface
+		     if ({List.nth {List.nth Input.map Position.x+1} Position.y} == 0) then
+			Msg = null
 		     else
-			if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
-			   move(west pt(x:Pos.x y:Pos.y-1))
-			elseif {CanMove State pt(x:Pos.x y:Pos.y+1)} then
-			   move(east pt(x:Pos.x y:Pos.y+1))
-			elseif{CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-			   move(north pt(x:Pos.x-1 y:Pos.y))
+			if ({CanMove State pt(x:Position.x y:Position.y-1)}) then
+			   Msg = move(west pt(x:Position.x y:Position.y-1))
+			elseif ({CanMove State pt(x:Position.x y:Position.y+1)}) then
+			   Msg = move(east pt(x:Position.x y:Position.y+1))
+			elseif ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+			   Msg = move(north pt(x:Position.x-1 y:Position.y))
 			end
 		     end
 		  end
 	       else
-		  if {CanMove State pt(x:Position.x-1 y:Position.y)} then
-		     move(north pt(x:Position.x-1 y:Position.y))
+		  if ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+		     Msg = move(north pt(x:Position.x-1 y:Position.y))
 		  else
-		     if {List.nth {List.nth Input.map Pos.x-1} Pos.y} == 0 then
-			surface
+		     if ({List.nth {List.nth Input.map Position.x-1} Position.y} == 0) then
+			Msg = null
 		     else
-			if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
-			   move(west pt(x:Pos.x y:Pos.y-1))
-			elseif {CanMove State pt(x:Pos.x y:Pos.y+1)} then
-			   move(east pt(x:Pos.x y:Pos.y+1))
-			else{CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-			   move(south pt(x:Pos.x+1 y:Pos.y))
+			if ({CanMove State pt(x:Position.x y:Position.y-1)}) then
+			   Msg = move(west pt(x:Position.x y:Position.y-1))
+			elseif ({CanMove State pt(x:Position.x y:Position.y+1)}) then
+			   Msg = move(east pt(x:Position.x y:Position.y+1))
+			elseif ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+			   Msg = move(south pt(x:Position.x+1 y:Position.y))
 			end
 		     end
 		  end
 	       end
 	    else
-	       if (Position.x - Xn) < 0 then
-		  if {CanMove State pt(x:Position.x y:Position.y+1)} then
-		     move(east pt(x:Position.x y:Position.y+1))
+	       if ((Position.x - Xn) < 0) then
+		  if ({CanMove State pt(x:Position.x y:Position.y+1)}) then
+		     Msg = move(east pt(x:Position.x y:Position.y+1))
 		  else
-		     if {List.nth {List.nth Input.map Pos.x} Pos.y+1} == 0 then
-			surface
+		     if ({List.nth {List.nth Input.map Position.x} Position.y+1} == 0) then
+			Msg = null
 		     else
-			if {CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-			   move(north pt(x:Pos.x-1 y:Pos.y))
-			elseif {CanMove State pt(x:Pos.x+1 y:Pos.y)} then
-			   move(south pt(x:Pos.x+1 y:Pos.y))
-			elseif{CanMove State pt(x:Pos.x y:Pos.y-1)} then
-			   move(west pt(x:Pos.x y:Pos.y-1))
+			if ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+			   Msg = move(north pt(x:Position.x-1 y:Position.y))
+			elseif ({CanMove State pt(x:Position.x+1 y:Position.y)}) then
+			   Msg = move(south pt(x:Position.x+1 y:Position.y))
+			elseif ({CanMove State pt(x:Position.x y:Position.y-1)} )then
+			   Msg = move(west pt(x:Position.x y:Position.y-1))
 			end
 		     end
 		  end
 	       else
-		  if {CanMove State pt(x:Position.x-1 y:Position.y)} then
-		     move(north pt(x:Position.x-1 y:Position.y))
+		  if ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+		     Msg = move(north pt(x:Position.x-1 y:Position.y))
 		  else
-		     if {List.nth {List.nth Input.map Pos.x-1} Pos.y} == 0 then
-			surface
+		     if ({List.nth {List.nth Input.map Position.x-1} Position.y}) == 0 then
+			Msg = null
 		     else
-			if {CanMove State pt(x:Pos.x y:Pos.y-1)} then
-			   move(west pt(x:Pos.x y:Pos.y-1))
-			elseif {CanMove State pt(x:Pos.x y:Pos.y+1)} then
-			   move(east pt(x:Pos.x y:Pos.y+1))
-			else{CanMove State pt(x:Pos.x-1 y:Pos.y)} then
-			   move(south pt(x:Pos.x+1 y:Pos.y))
+			if ({CanMove State pt(x:Position.x y:Position.y-1)}) then
+			   Msg = move(west pt(x:Position.x y:Position.y-1))
+			elseif ({CanMove State pt(x:Position.x y:Position.y+1)}) then
+			   Msg = move(east pt(x:Position.x y:Position.y+1))
+			elseif ({CanMove State pt(x:Position.x-1 y:Position.y)}) then
+			   Msg = move(south pt(x:Position.x+1 y:Position.y))
 			end
 		     end
 		  end
@@ -327,30 +332,23 @@ in
 	    end
 	 end
       else
-	 {RandomMove State Position}
+         Msg = {RandomMove State}
       end
-   end
-
-   fun{Move State Position} Msg NewState Ret in
-      Msg = {SmartMove State Position}
-      if Msg==surface orelse Msg==null then
+      case Msg of null then
 	 NewState = {UpdateState State [surf#true visited#[State.visited.1]]}
 	 Ret = ret(surface NewState)
-      else
-	 case Msg of move(Dir NewPos)
-	    NewState = {UpdateState State [pos#NewPos visited#(NewPos|State.visited)]}
-	    Ret = ret(Dir NewState)
-	 end
+      [] move(Dir NewPos) then
+	 NewState = {UpdateState State [pos#NewPos visited#(NewPos|State.visited)]}
+	 Ret = ret(Dir NewState)
       end
-      {Browser.browse State.visited}
-      case Ret
-      of ret(NewDir NewState) then
+      case Ret of ret(NewDir NewState) then
 	 Direction = NewDir
 	 Position = NewState.pos
 	 ID = NewState.id
-	 NewState
       end
+      NewState
    end
+
 %%%
 
    %Donne au Sub la permission de replonger
@@ -361,35 +359,142 @@ in
 
 %%%
 
+
+
    %Donne au Sub la permission de charger un item de son choix
-   % A COMPLETER
    fun{ChargeItem State ID KindItem} NewState in
-      NewState = State
-      ID = NewState.id
-      KindItem = null
+      if (State.focus == null) then
+	 if (State.nextCharge==drone andthen State.droneCharge<Input.drone) then
+	    NewState = {UpdateState State [droneCharge#State.droneCharge+1 nextCharge#sonar]}
+	    if (NewState.droneCharge == Input.drone) then
+	       KindItem = drone
+               ID = NewState.id
+	    else
+	       KindItem = null
+               ID = NewState.id
+	    end
+	 elseif (State.sonarCharge<Input.sonar andthen State.nextCharge==sonar) then            %{System.show NewState}
+	    if (State.sonarCharge == Input.sonar-1) then
+               NewState = {UpdateState State [sonarCharge#State.sonarCharge+1 nextCharge#missile]}
+	       KindItem = sonar
+	    else
+               NewState = {UpdateState State [sonarCharge#State.sonarCharge+1]}
+	       KindItem = null
+               ID = NewState.id
+	    end
+	 elseif (State.missileCharge<Input.missile andthen State.nextCharge==missile) then
+	    NewState = {UpdateState State [missileCharge#State.missileCharge+1 nextCharge#drone]}
+	    if (NewState.missileCharge == Input.missile) then
+	       KindItem = missile
+               ID = NewState.id
+	    else
+	       KindItem = null
+               ID = NewState.id
+	    end
+	 elseif (State.focus \= null) then
+	    if (State.missileCharge<Input.missile) then
+	       NewState = {UpdateState State [missileCharge#State.missileCharge+1 nextCharge#sonar]}
+	       if (NewState.missileCharge == Input.missile) then
+		  KindItem = missile
+                  ID = NewState.id
+	       else
+		  KindItem = null
+                  ID = NewState.id
+	       end
+	    end
+	 else
+	    KindItem = null
+            ID = NewState.id
+	 end
+      else
+         NewState = State
+         ID = NewState.id
+	 KindItem = null
+      end
       NewState
    end
 
 %%%
 
+
    %Donne au Sub la permission de tirer un item de son choix (missile, sonar, drone)
-   % A COMPLETER
-   fun{FireItem State ID KindFire} NewState in
-      NewState = State
-      KindFire = null
+   fun{FireItem State ID KindFire}
+      fun{DistTo Pos1 Pos2}
+	 {Number.abs Pos1.x-Pos2.x} + {Number.abs Pos1.y-Pos2.y}
+      end
+      fun {RandForDrone} R in
+	 R = {OS.rand} mod 2
+	 case R of 0 then
+	    drone(column ({OS.rand} mod Input.nColumn)+1 )
+	 [] 1 then
+	    drone(row ({OS.rand} mod Input.nRow)+1)
+	 end
+      end
+      fun {PosMi N Pos}
+	 if N == 0 then Pos.1
+	 else
+	    if Pos.2 \= nil then {PosMi N-1 Pos.2}
+	    else Pos.1 end
+	 end
+      end
+      NewState
+      MPos
+   in
+     %{System.show State}
+      case State.focus
+      of null then
+         {System.show 'Pas de FOCUS'}
+	 if (State.sonarCharge==Input.sonar) then
+            %FIRE SONAR
+            {System.show 'FireSonar'}
+	    KindFire = sonar
+	    NewState = {UpdateState State [sonarCharge#0 sonarLaunchOnce#true]}
+	 elseif State.droneCharge == Input.drone andthen State.sonarLaunchOnce==true then
+            % FIRE DRONE
+            {System.show 'FireDrone'}
+	    KindFire = {RandForDrone}
+	    NewState = {UpdateState State [droneCharge#0]}
+	elseif State.missileCharge == Input.missile then
+            %FIRE THE MISSILE
+            %{System.show 'FireMissile?'}
+	    MPos = {PosMi Input.minDistanceMissile State.visited}
+	    if ({DistTo MPos State.pos}>=Input.minDistanceMissile andthen {DistTo MPos State.pos} =< Input.maxDistanceMissile) then
+               {System.show 'FireMissile'}
+	       KindFire = missile(MPos)
+	       NewState = {UpdateState State [missileCharge#0]}
+	    else
+	       NewState = State
+	       KindFire = null
+	    end
+	 else
+	    NewState = State
+	    KindFire = null
+	 end
+      []N then
+         {System.show 'Focus'}
+	 if State.missileCharge == Input.missile andthen {DistTo State.pos State.enemies.N.pos} =< Input.maxDistanceMissile andthen {DistTo State.pos State.enemies.N.pos} >= Input.minDistanceMissile then
+            %FIRE THE MISSILE
+            {System.show 'FireMissile - FOCUS'}
+	    KindFire = missile(State.enemies.N.pos)
+	    NewState = {UpdateState State [missileCharge#0]}
+	 else
+	    NewState = State
+	    KindFire = null
+	 end
+      end
       ID = NewState.id
+      {System.show 'FireItem'}
+     % %{System.show NewState}
       NewState
    end
 
 %%%
 
    %Donne au Sub la permission de tirer une mine
-   % A COMPLETER
-   fun{FireMine State ID Mine} NewState in
-      NewState = State
-      ID = NewState.id
-      Mine = null
-      State
+   fun{FireMine State ID Mine}
+        ID = State.id
+        Mine = null
+        State
    end
 
 %%%
@@ -403,63 +508,63 @@ in
 
 %%%
 
-   %Dit au Sub qu'un Sub a bougé
+   % Dit au Sub qu'un Sub a bougé
    % Verif si ne sort pas de la map sinon considere position fausse
    % init focus si sur de position
-   fun{SayMove State ID Direction} N StateN StateEn NewState Npos YS XS R Dist DistFocus in
+   fun{SayMove State ID Direction} Pos N StateN StateEn NewState Npos YS XS StateX StateY in
       N = ID.id
-      YS = null
-      XS = null
-      if ID \= State.id then
-	 Npos = State.enemies.N.pos
+      Pos = State.pos
+      if (ID \= State.id) then
+         Npos = State.enemies.N.pos
 	 if Npos \= null then
-	    case Direction
-	    of north then
-	       if State.enemies.N.x+1 <= Input.NRow then
-		  StateN = {UpdateState State.enemies.N [pos#State.enemies.N.x+1]}
+	    case Direction of north then
+	       if ((Npos.x+1) =< Input.nRow andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0 ) then
+		  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x+1 y:Npos.y))]}
+                  XS = null
 	       else
 		  YS = true
 		  XS = false
 	       end
 	    [] south then
-	       if State.enemies.N.x-1 > 0 then
-		  StateN = {UpdateState State.enemies.N [pos#State.enemies.N.x-1]}
+	       if( (Npos.x-1) > 0 andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
+		  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x-1 y:Npos.y))]}
+                  XS = null
 	       else
 		  YS = true
 		  XS = false
 	       end
 	    [] east then
-	       if State.enemies.N.y+1 <= Input.NColumn then
-		  StateN = {UpdateState State.enemies.N [pos#State.enemies.N.y+1]}
+	       if ((Npos.y+1) =< Input.nColumn andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
+		  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x y:Npos.y+1))]}
+                  XS = null
 	       else
 		  XS = true
 		  YS = false
 	       end
 	    [] west then
-	       if State.enemies.N.x-1 > 0 then
-		  StateN = {UpdateState State.enemies.N [pos#State.enemies.N.y-1]}
+               if ((Npos.x-1) > 0 andthen {List.nth {List.nth Input.map Pos.x} Pos.y} == 0) then
+		  StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x y:Npos.y-1))]}
+                  XS = null
 	       else
 		  XS = true
 		  YS = false
 	       end
 	    end
-	    if XS \= null then
-	       {UpdateState State.xsure [N#XS]}
-	       {UpdateState State.ysure [N#YS]}
+	    if ((XS == true orelse XS==false) andthen N=<Input.nbPlayer) then
+               StateX = {UpdateState State.xsure [N#XS]}
+               StateY = {UpdateState State.ysure [N#YS]}
 	    end
 	    StateEn = {UpdateState State.enemies [N#StateN]}
-	    if State.xsure.N == true andthen State.ysure.N == true then
-	       if State.focus==null then
+	    if (State.xsure.N == true orelse State.ysure.N == true) then
+	       if (State.focus==null) then
 		  NewState = {UpdateState State [focus#N enemies#StateEn]}
-	       else
-		  DistFocus = {Number.abs State.ennemis.(State.focus).pos.x - State.pos.x} + {Number.abs State.ennemis.(State.focus).pos.y - State.pos.y}
-		  Dist = {Number.abs State.ennemis.N.pos.x - State.pos.x} + {Number.abs State.ennemis.N.pos.y - State.pos.y}
-		  if Dist < DistFocus then
-		     NewState = {UpdateState State [focus#N enemies#StateEn]}
-		  end
 	       end
 	    else
-	       NewState = {UpdateState State [enemies#StateEn]}
+	       if (XS \= null) then
+		  NewState = {UpdateState State [enemies#StateEn xsure#StateX ysure#StateY]}
+	       else
+		  NewState = {UpdateState State [enemies#StateEn]}
+	       end
 	    end
 	 else
 	    NewState = State
@@ -467,33 +572,29 @@ in
       else
 	 NewState = State
       end
+      {System.show 'SayMove'}
+      %{System.show NewState}
       NewState
    end
 
 %%%
 
    %Dit au Sub qu'un Sub a fait surface
-   % A COMPLETER
    fun{SaySurface State ID}
-   %A priori on s'en bat les couilles
       State
    end
 
 %%%
 
    %Dit au Sub qu'un Sub a fini de charger un item
-   % A COMPLETER
    fun{SayCharge State ID KindItem}
-   %A priori on s'en bat les couilles
       State
    end
 
 %%%
 
    %Dit au Sub qu'une mine a été placée
-   % A COMPLETER
    fun{SayMinePlaced State ID}
-   %A priori on s'en bat les couilles
       State
    end
 
@@ -501,14 +602,14 @@ in
 
    %Annonce l'explosion d'un missile, le Sub doit dire s'il a été touché
    fun{SayMissileExplode State ID Position Message}
-      fun{DistToSub State Pos}
-	 {Number.abs State.pos.x - Pos.x} + {Number.abs State.pos.y - Pos.y}
+      fun{DistToSub Pos1 Pos2}
+	 {Number.abs Pos1.x - Pos2.x} + {Number.abs Pos1.y - Pos2.y}
       end
       NewState
       MidState
       Dist
    in
-      Dist = {DistToSub State Position}
+      Dist = {DistToSub State.pos Position}
       if Dist == 0 then
 	 MidState = {UpdateState State [hp#(State.hp-2)]}
       elseif Dist == 1 then
@@ -528,6 +629,8 @@ in
       else
 	 Message = null
       end
+      {System.show 'SayMissileExplode'}
+      %{System.show NewState}
       NewState
    end
 
@@ -535,14 +638,14 @@ in
 
    %Annonce l'explosion d'une mine, le Sub doit dire s'il a été touché
    fun{SayMineExplode State ID Position Message}
-      fun{DistToSub State Pos}
-	 {Number.abs State.pos.x - Pos.x} + {Number.abs State.pos.y - Pos.y}
+      fun{DistToSub Pos1 Pos2}
+	 {Number.abs Pos1.x-Pos2.x} + {Number.abs Pos1.y-Pos2.y}
       end
       NewState
       MidState
       Dist
    in
-      Dist = {DistToSub State Position}
+      Dist = {DistToSub State.pos Position}
       if Dist == 0 then
 	 MidState = {UpdateState State [hp#(State.hp-2)]}
       elseif Dist == 1 then
@@ -562,6 +665,8 @@ in
       else
 	 Message = null
       end
+      {System.show 'SayMineExplode'}
+      %{System.show NewState}
       NewState
    end
 
@@ -590,27 +695,43 @@ in
 %%%
 
    %Réponse au drone que l'on a lancé
-   fun{SayAnswerDrone State Drone ID Answer} StateN StateEn NewState in
+   fun{SayAnswerDrone State Drone ID Answer}
+      StateN StateEn NewState StateX StateY N Npos in
+      N = ID.id
+      %Bloque parfois ici wtf...
+      Npos = State.enemies.N.pos
+      {System.show Npos}
       case Drone
       of drone(row X) then
 	 if Answer == true then
-	    if ID \= State.id then
-	       StateN = {UpdateState State.enemies.(ID.id) [pos#Answer xsure#true ysure#false xtrue#State.xtrue+1]}
-	       StateEn = {UpdateState State.enemies [ID.id#StateN] }
-	       NewState = {UpdateState State}
-	       NewState
+	    if N \= State.id.id then
+	       StateX = {UpdateState State.xsure [N#true]}
+               StateN = {UpdateState State.enemies.N [pos#(pt(x:X y:Npos.y))]}
+	       StateEn = {UpdateState State.enemies [N#StateN] }
+	       NewState = {UpdateState State [enemies#StateEn xsure#StateX]}
+               %{System.show NewState}
+            else
+               NewState = State
 	    end
+	 else
+	    NewState = State
 	 end
       []drone(column Y) then
 	 if Answer == true then
-	    if ID \= State.id then
-	       StateN = {UpdateState State.enemies.(ID.id) [pos#Answer xsure#false ysure#true ytrue#State.ytrue+1]}
-	       StateEn = {UpdateState State.enemies [ID.id#StateN] }
-	       NewState = {UpdateState State}
-	       NewState
-	    end
+	    if N \= State.id.id then
+	       StateY = {UpdateState State.ysure [N#true]}
+	       StateN = {UpdateState State.enemies.N [pos#(pt(x:Npos.x y:Y))]}
+	       StateEn = {UpdateState State.enemies [N#StateN] }
+	       NewState = {UpdateState State [enemies#StateEn ysure#StateY]}
+               %{System.show NewState}
+            else
+               NewState = State
+            end
+	 else
+	    NewState = State
 	 end
       end
+      NewState
    end
 
 %%%
@@ -618,7 +739,7 @@ in
    %Annonce le passage d'un sonar, le Sub doit y répondre
    fun{SayPassingSonar State ID Answer}
       ID = State.id
-         %On donnera la position x exacte, mais la mauvaise position y (random), par exemple
+      %On donnera la position x exacte, mais la mauvaise position y (random), par exemple
       Answer = pt(x:State.pos.x y:({OS.rand} mod Input.nColumn + 1))
       State
    end
@@ -638,10 +759,10 @@ in
 	    Y = {UpdateState State.ysure [N#false]}
 	 end
 	 NewState = {UpdateState State [enemies#StateEn xsure#X ysure#Y]}
-	 NewState
       else
-	 State
+	 NewState = State
       end
+      NewState
    end
 
 %%%
@@ -651,11 +772,12 @@ in
       StateEn = {Record.subtract State.enemies ID}
       X = {Record.subtract State.xsure ID}
       Y = {Record.subtract State.ysure ID}
-      if State.focus == ID then
+      if State.focus\= null andthen State.focus == ID then
 	 NewState = {UpdateState State [enemies#StateEn focus#null X Y]}
       else
 	 NewState = {UpdateState State [enemies#StateEn X Y]}
       end
+      NewState
    end
 
 %%%
@@ -684,7 +806,6 @@ in
    proc{TreatStream Stream State}
       %Le State va être la mémoire du Sub, qui sera modifiée selon le message reçu
       %Pv, position, munitions, ennemis, ...
-
       case Stream
       of nil then skip
       []initPosition(ID Position)|S then NewState in
