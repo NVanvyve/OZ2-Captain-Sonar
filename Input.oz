@@ -49,8 +49,8 @@ in
 
 %%%% Description of the map %%%%
 
-   NRow = 10
-   NColumn = 10
+   NRow = 7
+   NColumn = 7
 
    Map = _
    {MapGenerator.map Map NRow NColumn}
@@ -70,9 +70,9 @@ in
 
 %%%% Players description %%%%
 
-   NbPlayer = 3
+   NbPlayer = 2
    Players = [player010DrunkAI player010DrunkAI player010DroneMasterAI]
-   Colors = [yellow red green]
+   Colors = [yellow green red]
 
 %%%% Thinking parameters (only in simultaneous) %%%%
 

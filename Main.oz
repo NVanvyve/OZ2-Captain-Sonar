@@ -5,8 +5,7 @@ import
    PlayerManager
 
    OS %rand
-   Browser %debug
-   System %debug
+
 define
 
    GuiPort %Port du GUI
@@ -204,7 +203,6 @@ in
 	    of nil then State
 	    []H|T then Msg in
 	       {Send H sayMineExplode(FM_ID Pos Msg)}
-               {Browser.browse sayMineExplode(FM_ID Pos Msg)}
 	       case Msg
 	       of null then NewState = State skip
 	       []sayDeath(RET_ID) then StateN in
@@ -226,8 +224,6 @@ in
       in
 	 NewState = {BroadcastMine State Players Pos}
 	 {Send GuiPort removeMine(FM_ID FM_Mine)}
-         {Browser.browse State}
-         {Browser.browse NewState}
 	 NewState
       end
    end
@@ -401,7 +397,6 @@ in
 
    %WHEN EVERY PLAYER HAS SET UP LAUNCH THE GAME
    {Delay 4000}
-   {System.show 'starting game loop'}
    {GameLoop {CreateGameState}}
 
 end
